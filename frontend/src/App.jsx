@@ -1,25 +1,27 @@
-import { useState } from "react";
+import { useState } from "react";  // allows the ui to update with user interactions
 import "./App.css";
 
 function App() {
+  // define behavior for interacting with the backend
+
   const [messages, setMessages] = useState([
     {
       role: "assistant",
       content:
         "Hey, it's Spencstie. Let's make your life a little less boring.\n\nWhen are you planning on FINALLY touching some grass?",
     },
-  ]);
+  ]);  // messages = full chat history
 
-  const [input, setInput] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [input, setInput] = useState("");  // what the user is typing rn
+  const [loading, setLoading] = useState(false);  // whether we're waiting for backend/gemini
+  const [error, setError] = useState("");  // any error message
 
   const sendMessage = async (e) => {
     e.preventDefault();
     const trimmed = input.trim();
     if (!trimmed || loading) return;
 
-    // 1. Add the user message to local state immediately
+    // add the current user message to the chat history
     const newMessages = [...messages, { role: "user", content: trimmed }];
     setMessages(newMessages);
     setInput("");
@@ -27,7 +29,7 @@ function App() {
     setError("");
 
     try {
-      // 2. Send the full chat history to your backend
+      // send the full chat history to your backend and wait for reply
       const res = await fetch("http://localhost:3000/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -44,18 +46,22 @@ function App() {
         throw new Error("No reply from server");
       }
 
-      // 3. Append the assistant reply
+      // if a valid response, append gemini's reply to the chat history
       setMessages((prev) => [
         ...prev,
         { role: "assistant", content: data.reply },
       ]);
-    } catch (err) {
+    }
+    catch (err) {
       console.error(err);
       setError("Failed to talk to Spencstie. Try again.");
-    } finally {
+    }
+    finally {
       setLoading(false);
     }
   };
+
+  // specify ui for the chatbot (html)
 
   return (
     <div className="app">
@@ -90,6 +96,7 @@ function App() {
 
         {error && <p className="error-text">{error}</p>}
 
+        {/* user types input --> submitting the form calls sendMessage fucntion defined above */}
         <form className="input-row" onSubmit={sendMessage}>
           <input
             type="text"
