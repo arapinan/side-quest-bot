@@ -46,6 +46,9 @@ Behavior:
   rough cost, and a brief description.
 - Give a mix of actual places to go, events, and random niche activities 
 - Keep responses under ~250 words unless the user asks for more detail.
+- When outputting the side quest recommendations, please format them nicely
+  and spaced out.
+- Don't use astericks.
 `,
 });
 

@@ -1,20 +1,67 @@
-import { useState } from "react";  // allows the ui to update with user interactions
+import { useState, useEffect, useRef } from "react";
 import "./App.css";
 
 function App() {
-  // define behavior for interacting with the backend
+
+  // define components for the ui:
 
   const [messages, setMessages] = useState([
     {
       role: "assistant",
       content:
-        "Hey, it's Spencstie. Let's make your life a little less boring.\n\nWhen are you planning on FINALLY touching some grass?",
+        "Hey, it's Spencstie--here to make your life a little less boring.\n\nWhen are you planning on FINALLY touching some grass?",
     },
   ]);  // messages = full chat history
 
-  const [input, setInput] = useState("");  // what the user is typing rn
-  const [loading, setLoading] = useState(false);  // whether we're waiting for backend/gemini
-  const [error, setError] = useState("");  // any error message
+  // define component states
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [typedText, setTypedText] = useState("");
+  const [typingIndex, setTypingIndex] = useState(-1);
+  const bottomRef = useRef(null);
+  const inputRef = useRef(null);
+
+  // implement the typewriter effect
+  useEffect(() => {
+    const lastIndex = messages.length - 1;
+    if (lastIndex < 0) return;
+
+    const lastMessage = messages[lastIndex];
+    if (lastMessage.role !== "assistant") return;
+
+    const fullText = lastMessage.content;
+
+    setTypingIndex(lastIndex);
+    setTypedText("");
+
+    let i = 0;
+    const interval = setInterval(() => {
+      i += 1;
+      setTypedText(fullText.slice(0, i));
+
+      if (i >= fullText.length) {
+        clearInterval(interval);
+        setTypingIndex(-1);
+      }
+    }, 25);
+
+    return () => clearInterval(interval);
+  }, [messages]);
+
+  // implement autoscroll
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, typedText]);
+
+  // implement an active cursor in the input bar
+  useEffect(() => {
+    if (!loading && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [loading]);
+
+  // define behavior for interacting with the backend:
 
   const sendMessage = async (e) => {
     e.preventDefault();
@@ -36,15 +83,9 @@ function App() {
         body: JSON.stringify({ messages: newMessages }),
       });
 
-      if (!res.ok) {
-        throw new Error("Server error");
-      }
-
+      if (!res.ok) throw new Error("Server error");
       const data = await res.json();
-
-      if (!data.reply) {
-        throw new Error("No reply from server");
-      }
+      if (!data.reply) throw new Error("No reply from server");
 
       // if a valid response, append gemini's reply to the chat history
       setMessages((prev) => [
@@ -66,48 +107,54 @@ function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <h1>[cool-app-name]</h1>
-        <p>side quest in the city with you own personal assistant, spencstie</p>
+        <h1>SideQuest NYC</h1>
+        <p>Side quest in the city with your very own AI bestie</p>
       </header>
 
-      <main className="chat-container">
-        <div className="chat-window">
-          {messages.map((m, idx) => (
-            <div
-              key={idx}
-              className={
-                m.role === "assistant"
-                  ? "bubble bubble-assistant"
-                  : "bubble bubble-user"
-              }
-            >
-              {m.content.split("\n").map((line, i) => (
-                <p key={i}>{line}</p>
-              ))}
-            </div>
-          ))}
+      <main>
+        {messages.map((m, idx) => {
+          if (m.role === "assistant") {
+            const isTyping = idx === typingIndex;
+            const textToDisplay = isTyping ? typedText : m.content;
 
-          {loading && (
-            <div className="bubble bubble-assistant thinking">
-              Spencstie is thinking…
+            return (
+              <div key={idx} className="message-assistant">
+                {textToDisplay}
+              </div>
+            );
+          }
+
+          return (
+            <div key={idx} className="message-user">
+              <div className="user-bubble">{m.content}</div>
             </div>
-          )}
-        </div>
+          );
+        })}
+
+        {loading && (
+          <div className="thinking-bubble-container">
+            <div className="thinking-bubble">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+          </div>
+        )}
 
         {error && <p className="error-text">{error}</p>}
 
-        {/* user types input --> submitting the form calls sendMessage fucntion defined above */}
+        <div ref={bottomRef} />
+
         <form className="input-row" onSubmit={sendMessage}>
           <input
             type="text"
-            placeholder="type here..."
+            placeholder="Type..."
             value={input}
             onChange={(e) => setInput(e.target.value)}
             disabled={loading}
+            ref={inputRef}
+            autoFocus
           />
-          <button type="submit" disabled={loading}>
-            {loading ? "sending..." : "send"}
-          </button>
         </form>
       </main>
     </div>
