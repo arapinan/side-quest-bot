@@ -1,19 +1,34 @@
 import { useState, useEffect, useRef } from "react";
-import "./Chat.css";
+import { useParams } from "react-router-dom";
+import "./App.css";
+
+const GREETINGS = {
+  spenstie:
+    "Hey, it's Spenstie. Let's make your life a little less boring.\n\nWhen are you planning on FINALLY touching some grass?",
+  mafia:
+    "Ey, kid. The name's Don. I'm gonna help you have a good time in this city—strictly legit, capisce?\n\nWhen are you heading out for your little 'operation'?",
+  cassanova:
+    "Ciao, I'm Romeo, your romantic side-quest architect.\n\nWhen are you hoping to wander the city and make some memories?",
+};
 
 function Chat() {
 
   // define components for the ui:
 
-  const [messages, setMessages] = useState([
-    {
-      role: "assistant",
-      content:
-        "Hey, it's Spencstie--here to make your life a little less boring.\n\nWhen are you planning on FINALLY touching some grass?",
-    },
-  ]);  // messages = full chat history
+  // define which persona we are chatting with
+  const { persona } = useParams();
+  const personaKey = GREETINGS[persona] ? persona : "spenstie";
+
+  const PERSONA_COLORS = {
+    spenstie: "#F4BB44",
+    mafia: "#0F52BA",
+    cassanova: "#DE3163",
+  };
+
+  const personaColor = PERSONA_COLORS[personaKey] || "#111"; 
 
   // define component states
+  const [messages, setMessages] = useState([]); // messages = full chat history
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -21,6 +36,16 @@ function Chat() {
   const [typingIndex, setTypingIndex] = useState(-1);
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
+
+  // when the page loads, set the initial greeting message
+  useEffect(() => {
+    setMessages([
+      {
+        role: "assistant",
+        content: GREETINGS[personaKey],
+      },
+    ]);
+  }, [personaKey]);
 
   // implement the typewriter effect
   useEffect(() => {
@@ -80,7 +105,10 @@ function Chat() {
       const res = await fetch("http://localhost:3000/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: newMessages }),
+        body: JSON.stringify({ 
+          messages: newMessages,
+          persona: personaKey
+        }),
       });
 
       if (!res.ok) throw new Error("Server error");
@@ -95,7 +123,7 @@ function Chat() {
     }
     catch (err) {
       console.error(err);
-      setError("Failed to talk to Spencstie. Try again.");
+      setError("Failed to talk to guide. Try again.");
     }
     finally {
       setLoading(false);
@@ -105,7 +133,7 @@ function Chat() {
   // specify ui for the chatbot (html)
 
   return (
-    <div className="app">
+    <div className="app" style={{ "--personaColor": personaColor }}>
       <header className="app-header">
         <h1>SideQuest NYC</h1>
       </header>

@@ -6,7 +6,8 @@ export default function App() {
   return (
     <Routes>
       <Route path="/" element={<Home />} />
-      <Route path="/chat" element={<Chat />} />
+      {/* /chat/spencstie, /chat/mafia, /chat/cassanova */}
+      <Route path="/chat/:persona" element={<Chat />} />
     </Routes>
   );
 }
