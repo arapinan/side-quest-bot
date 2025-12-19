@@ -6,6 +6,7 @@
 ```bash
 npm init -y
 npm install express cors dotenv @google-cloud/vertexai
+npm install axios
 ```
 
 # HOW TO RUN
