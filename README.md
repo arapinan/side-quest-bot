@@ -21,3 +21,10 @@ cd frontend
 npm install  # only need to run this the first time
 npm run dev
 ```
+
+# How to Generate RAPIDAPI key
+1. Go to https://rapidapi.com/
+2. Sign up for an account
+3. In the searchapi bar, type real-time-events-search
+4. Click the subscribe button at the top right
+5. Copy the api key and put into your .env file
